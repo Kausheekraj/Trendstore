@@ -5,5 +5,5 @@ services:
       dockerfile: operation/Docker/dockerfile
     ports:
       - "3000:80"
-    image: kausheekraj/trend-store-nginx:latest
+    image: kausheekraj/trendstore-nginx:latest
     container_name: Trend-store
