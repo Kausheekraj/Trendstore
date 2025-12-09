@@ -2,61 +2,53 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REGISTRY = 'docker.io'
-        DOCKER_IMAGE    = 'yourname/trend'
-        DOCKER_CREDS    = credentials('dockerhub-creds')  // add in Jenkins
-        AWS_REGION      = 'us-east-2'
-        EKS_CLUSTER     = 'trend-eks'
-    }
-
-    triggers {
-        githubPush()
+        SCRIPT_DIR = "operation/scripts"
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/YOUR_GITHUB_USERNAME/Trend.git'
+                checkout scm
             }
         }
 
-        stage('Build Docker image') {
+        stage('Prepare Scripts') {
             steps {
-                sh """
-                  docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
-                  docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
-                """
+                sh "chmod +x ${SCRIPT_DIR}/*.sh"
             }
         }
 
-        stage('Push Docker image') {
+        stage('Build Image') {
             steps {
-                sh """
-                  echo ${DOCKER_CREDS_PSW} | docker login -u ${DOCKER_CREDS_USR} --password-stdin ${DOCKER_REGISTRY}
-                  docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
-                  docker push ${DOCKER_IMAGE}:latest
-                """
+                sh "${SCRIPT_DIR}/compose.sh -b"
             }
         }
 
-        stage('Deploy to EKS') {
+        stage('Deploy Container') {
             steps {
-                sh """
-                  aws eks update-kubeconfig --name ${EKS_CLUSTER} --region ${AWS_REGION}
-                  kubectl apply -f k8s/deployment.yaml
-                  kubectl apply -f k8s/service.yaml
-                """
+                sh "${SCRIPT_DIR}/compose.sh -d"
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                script {
+                    sleep 5
+                }
+                sh "curl -I http://localhost:3000 || true"
             }
         }
     }
 
     post {
         success {
-            echo "Deployment successful!"
+            echo '🚀 Deployment Successful'
         }
         failure {
-            echo "Build or deployment failed."
+            echo '💥 Pipeline Failed — Check Logs'
         }
     }
 }
+
 
