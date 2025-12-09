@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-cd $(dirname "${0}") || exit 1
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
