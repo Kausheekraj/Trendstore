@@ -1,11 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: trendstore-deployment
-  labels:
-    app: trendstore
+  name: trendstore
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: trendstore
@@ -16,10 +14,6 @@ spec:
     spec:
       containers:
         - name: trendstore
-          image: yourname/trend:latest
-          imagePullPolicy: Always
+          image: trendstore-nginx:latest
           ports:
             - containerPort: 3000
-          env:
-            - name: NODE_ENV
-              value: "production"
